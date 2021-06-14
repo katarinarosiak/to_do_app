@@ -15,10 +15,11 @@ html(lang="en-US")
       block headerLinks
 
     main
-      - let messageTypes = Object.keys(flash || {});
-      if messageTypes.length > 0
-        ul
-          each messageType in messageTypes
-            each message in flash[messageType]
-              li.flash(class=messageType)= message
+      h1 Todo Tracker
+        - let errorKinds = Object.keys(flash || {})
+          if errorKinds.length > 0 
+            ul 
+              each kind in errorKinds
+                each message in flash[kind]
+                  li.flash(class=kind)= message    
       block main
