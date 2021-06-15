@@ -35,6 +35,9 @@ const createValidatorChain = (name) => {
   ];
 };
 
+const retriveListById = (todoLists, listId) => todoLists.find(list => list.id === Number(listId));
+
+const retriveTodoById = (todoList, todoId) => todoList.todos.find(todo => todo.id === Number(todoId));
 
 app.set("views", "./views");
 app.set("view engine", "pug");
@@ -99,13 +102,10 @@ app.post('/lists', [
 );
 
 app.get('/lists/:todoListId', (req, res, next) => {
-  // Get the list ID from req.params.todoListId.
-  // Use the todo list ID to retrieve the specified todo list object from todoLists.
-  // The application should issue a 404 Not found. HTTP status code if no such list exists. (See the Hint.)
+
   let listId = req.params.todoListId
 
-  let todoList = todoLists.find(list => list.id === Number(listId));
-
+  let todoList = retriveListById(todoLists, listId)
   if (todoList === undefined) {
 
     let err = new Error();
@@ -119,6 +119,27 @@ app.get('/lists/:todoListId', (req, res, next) => {
   }
 }
 );
+
+app.post('/lists/:todoListId/todos/:todoId/toggle', (req, res, next) => {
+
+  let listId = req.params.todoListId
+  let todoId = req.params.todoId;
+  let todoList = retriveListById(todoLists, listId);
+  let todo = retriveTodoById(todoList, todoId);
+
+  if (todoList === undefined || todo === undefined) {
+    let err = new Error();
+    err.status = 400;
+    next(new Error('Not found'));
+  } else {
+    if (todo.done) {
+      todo.markUndone();
+    } else {
+      todo.markDone();
+    }
+    res.redirect(`/list/${todoListId}`);
+  }
+});
 
 app.use((err, req, res, _next) => {
   console.log(err); // Writes more extensive information to the console log
