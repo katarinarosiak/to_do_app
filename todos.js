@@ -59,7 +59,6 @@ app.use((req, res, next) => {
 });
 
 
-
 app.get('/', (req, res) => {
   res.redirect('lists');
 })
@@ -105,20 +104,26 @@ app.get('/lists/:todoListId', (req, res, next) => {
   // The application should issue a 404 Not found. HTTP status code if no such list exists. (See the Hint.)
   let listId = req.params.todoListId
 
-  let listToDisplay = todoLists.find(list => toString(list.id) == listId);
-  console.log(todoLists[2].id);
-  if (listToDisplay === undefined) {
-    //issue error 404
-    console.log('Error 404');
-    res.errors('Error 404');
+  let todoList = todoLists.find(list => list.id === Number(listId));
+
+  if (todoList === undefined) {
+
+    let err = new Error();
+    err.status = 400;
+    next(new Error('Not found'));
   } else {
-    res.render("/list", {
-      title: listToDisplay.title,
-      todos: listToDisplay.todos
+    res.render("list", {
+      todoList: todoList,
+      todos: todoList.todos
     });
   }
 }
 );
+
+app.use((err, req, res, _next) => {
+  console.log(err); // Writes more extensive information to the console log
+  res.status(404).send(err.message);
+});
 
 app.listen(PORT, (req, res) => {
   console.log(`Listening on port ${PORT} on ${HOST}`)
