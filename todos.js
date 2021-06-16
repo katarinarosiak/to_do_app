@@ -88,7 +88,6 @@ app.post('/lists', [
   if (!errors.isEmpty()) {
     errors.array().forEach(message => req.flash("error", message.msg));
     res.render('new-list', {
-      // errorMsg: errors.array().map(error => error.msg),
       flash: req.flash(),
       todoListTitle: req.body.todoListTitle,
     });
@@ -122,9 +121,9 @@ app.get('/lists/:todoListId', (req, res, next) => {
 
 app.post('/lists/:todoListId/todos/:todoId/toggle', (req, res, next) => {
 
-  let listId = req.params.todoListId
+  let todoListId = req.params.todoListId
   let todoId = req.params.todoId;
-  let todoList = retriveListById(todoLists, listId);
+  let todoList = retriveListById(todoLists, todoListId);
   let todo = retriveTodoById(todoList, todoId);
 
   if (todoList === undefined || todo === undefined) {
@@ -132,17 +131,55 @@ app.post('/lists/:todoListId/todos/:todoId/toggle', (req, res, next) => {
     err.status = 400;
     next(new Error('Not found'));
   } else {
+    let title = todo.title;
     if (todo.done) {
       todo.markUndone();
+      req.flash("success", `"${title}" marked as NOT done!`);
     } else {
       todo.markDone();
+      req.flash("success", `"${title}" marked done.`);
     }
-    res.redirect(`/list/${todoListId}`);
+    // res.render('list');
+    res.redirect(`/lists/${todoListId}`);
+  }
+});
+
+app.post('/lists/:todoListId/todos/:todoId/destroy', (req, res, next) => {
+
+  let todoListId = req.params.todoListId
+  let todoId = req.params.todoId;
+  let todoList = retriveListById(todoLists, todoListId);
+  let todo = retriveTodoById(todoList, todoId);
+
+  if (todoList === undefined || todo === undefined) {
+    let err = new Error();
+    err.status = 400;
+    next(new Error('Not found'));
+  } else {
+    let title = todo.title;
+    todoList.removeAt(todoList.findIndexOf(todo));
+    req.flash("success", `"${title}" has been removed!`);
+    res.redirect(`/lists/${todoListId}`);
+  }
+})
+
+app.post('/lists/:todoListId/complete_all', (req, res, next) => {
+  let todoListId = req.params.todoListId
+  let todoList = retriveListById(todoLists, todoListId);
+
+  if (todoList === undefined) {
+    let err = new Error();
+    err.status = 400;
+    next(new Error('Not found'));
+  } else {
+    todoList.markAllDone();
+    req.flash("success", `"All the todos has been completed."`);
+    res.redirect(`/lists/${todoListId}`);
   }
 });
 
 app.use((err, req, res, _next) => {
-  console.log(err); // Writes more extensive information to the console log
+  console.log(err);
   res.status(404).send(err.message);
 });
 
@@ -151,33 +188,3 @@ app.listen(PORT, (req, res) => {
 });
 
 
-
-// app.post("/lists",
-//   [
-//     body("todoListTitle")
-//       .trim()
-//       .isLength({ min: 1 })
-//       .withMessage("The list title is required.")
-//       .isLength({ max: 100 })
-//       .withMessage("List title must be between 1 and 100 characters.")
-//       .custom(title => {
-//         let duplicate = todoLists.find(list => list.title === title);
-//         return duplicate === undefined;
-//       })
-//       .withMessage("List title must be unique."),
-//   ],
-//   (req, res) => {
-//     let errors = validationResult(req);
-//     if (!errors.isEmpty()) {
-//       errors.array().forEach(message => req.flash("error", message.msg));
-//       res.render("new-list", {
-//         flash: req.flash(),
-//         todoListTitle: req.body.todoListTitle,
-//       });
-//     } else {
-//       todoLists.push(new TodoList(req.body.todoListTitle));
-//       req.flash("success", "The todo list has been created.");
-//       res.redirect("/lists");
-//     }
-//   }
-// );
