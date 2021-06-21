@@ -191,13 +191,12 @@ app.post('/lists/:todoListId/todos', [
   let todoList = retriveListById(todoLists, todoListId);
   let todoTitle = req.body.todoTitle;
 
-  let errors = validationResult(req);
-
   if (todoList === undefined) {
     let err = new Error();
     err.status = 400;
     next(new Error('Not found'));
   } else if (!errors.isEmpty()) {
+    let errors = validationResult(req);
     errors.array().forEach(message => req.flash("error", message.msg));
     res.render(`list`, {
       flash: req.flash(),
@@ -212,6 +211,20 @@ app.post('/lists/:todoListId/todos', [
     res.redirect(`/lists/${todoListId}`);
   }
 });
+
+app.get('/lists/:todoListId/edit', (req, res, next) => {
+  let todoListId = req.params.todoListId;
+  let todoList = retriveListById(todoLists, todoListId);
+
+  if (todoList === undefined) {
+    let err = new Error();
+    err.status = 400;
+    next(new Error('Not found'));
+  } else {
+    res.render('edit-list', { todoList });
+  }
+});
+
 
 app.use((err, req, res, _next) => {
   console.log(err);
