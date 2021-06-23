@@ -26,15 +26,7 @@ const compareListTitles = (firstList, secondList) => {
   }
 }
 
-const createValidatorChain = (name) => {
-  return [body(name)
-    .trim()
-    .isLength({ min: 1 })
-    .withMessage("The list name should be at least one character long")
-    .isLength({ max: 100 })
-    .withMessage("The list's name should be no longer than 100 characters")
-  ];
-};
+
 
 const retriveListById = (todoLists, listId) => todoLists.find(list => list.id === Number(listId));
 
@@ -190,13 +182,13 @@ app.post('/lists/:todoListId/todos', [
   let todoListId = req.params.todoListId
   let todoList = retriveListById(todoLists, todoListId);
   let todoTitle = req.body.todoTitle;
+  let errors = validationResult(req);
 
   if (todoList === undefined) {
     let err = new Error();
     err.status = 400;
     next(new Error('Not found'));
   } else if (!errors.isEmpty()) {
-    let errors = validationResult(req);
     errors.array().forEach(message => req.flash("error", message.msg));
     res.render(`list`, {
       flash: req.flash(),
@@ -225,6 +217,57 @@ app.get('/lists/:todoListId/edit', (req, res, next) => {
   }
 });
 
+app.post('/lists/:todoListId/destroy', (req, res, next) => {
+  let todoListId = req.params.todoListId;
+  let todoList = retriveListById(todoLists, todoListId);
+  let index = todoLists.findIndex(todoList => todoList.id === todoListId);
+
+  if (todoList === undefined) {
+    let err = new Error();
+    err.status = 400;
+    next(new Error('Not found'));
+  } else {
+    todoLists.splice(index, 1)
+    req.flash("success", 'To do list delated');
+    res.redirect('/lists');
+  }
+})
+
+app.post('/lists/:todoListId/edit',
+  [body("todoListTitle")
+    .trim()
+    .isLength({ min: 1 })
+    .withMessage("The list name should be at least one character long")
+    .isLength({ max: 80 })
+    .withMessage("The list's name should be no longer than 80 characters")
+    .custom(title => {
+      let duplicate = todoLists.find(list => list.title === title);
+      return duplicate === undefined;
+    })
+    .withMessage('List title must be uniqye.'),
+  ], (req, res, next) => {
+    let todoListId = req.params.todoListId;
+    let todoList = retriveListById(todoLists, todoListId);
+    let errors = validationResult(req);
+
+    if (todoList === undefined) {
+      let err = new Error();
+      err.status = 400;
+      next(new Error('Not found'));
+    } else if (!errors.isEmpty()) {
+      errors.array().forEach(message => req.flash("error", message.msg));
+      res.render('edit-list', {
+        flash: req.flash(),
+        todoListTitle: req.body.todoListTitle,
+        todoList: todoList,
+      });
+    } else {
+      todoList.setTitle(req.body.todoListTitle);
+      req.flash("success", 'The title has been updated');
+      res.redirect(`/lists/${todoListId}`);
+    }
+  })
+
 
 app.use((err, req, res, _next) => {
   console.log(err);
@@ -234,3 +277,6 @@ app.use((err, req, res, _next) => {
 app.listen(PORT, (req, res) => {
   console.log(`Listening on port ${PORT} on ${HOST}`)
 });
+
+
+//doesnt work cancel and change title a
