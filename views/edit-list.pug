@@ -10,7 +10,7 @@ block main
                       method="post")
             button.delete(type='submit') Delete List
 
-  form(action=`/lists/${todoList.id}` method="post")
+  form(action=`/lists/${todoList.id}/edit` method="post")
     dl
       dt
         label(for="todoListTitle") Enter a new title for the list:

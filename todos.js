@@ -6,6 +6,7 @@ const { body, validationResult } = require("express-validator");
 
 const TodoList = require("./lib/todolist");
 const Todo = require("./lib/todo");
+const { sortTodoLists, sortTodos } = require("./lib/sort");
 
 const store = require("connect-loki");
 
@@ -13,6 +14,15 @@ const app = express();
 const HOST = "localhost";
 const PORT = 3000;
 const LokiStore = store(session);
+
+app.set("views", "./views");
+app.set("view engine", "pug");
+
+app.use(morgan("common"));
+app.use(express.static('public'));
+app.use(express.urlencoded({ extended: false }));
+
+app.use(flash());
 
 app.use(session({
   cookie: {
@@ -61,15 +71,6 @@ const retriveListById = (todoLists, listId) => todoLists.find(list => list.id ==
 const retriveTodoById = (todoList, todoId) => todoList.todos.find(todo => todo.id === Number(todoId));
 
 
-app.set("views", "./views");
-app.set("view engine", "pug");
-
-app.use(morgan("common"));
-app.use(express.static('public'));
-app.use(express.urlencoded({ extended: false }));
-
-
-app.use(flash());
 
 app.use((req, res, next) => {
   res.locals.flash = req.session.flash;
@@ -134,6 +135,7 @@ app.get('/lists/:todoListId', (req, res, next) => {
   }
 }
 );
+
 
 app.post('/lists/:todoListId/todos/:todoId/toggle', (req, res, next) => {
 
@@ -257,17 +259,19 @@ app.post('/lists/:todoListId/destroy', (req, res, next) => {
 })
 
 app.post('/lists/:todoListId/edit',
-  [body("todoListTitle")
-    .trim()
-    .isLength({ min: 1 })
-    .withMessage("The list name should be at least one character long")
-    .isLength({ max: 80 })
-    .withMessage("The list's name should be no longer than 80 characters")
-    .custom(title => {
-      let duplicate = req.session.todoLists.find(list => list.title === title);
-      return duplicate === undefined;
-    })
-    .withMessage('List title must be uniqye.'),
+  [
+    body("todoListTitle")
+      .trim()
+      .isLength({ min: 1 })
+      .withMessage("The list name should be at least one character long")
+      .isLength({ max: 100 })
+      .withMessage("The list's name should be no longer than 80 characters")
+      .custom((title, { req }) => {
+        let todoLists = req.session.todoLists;
+        let duplicate = todoLists.find(list => list.title === title);
+        return duplicate === undefined;
+      })
+      .withMessage('List title must be uniqye.'),
   ], (req, res, next) => {
     let todoListId = req.params.todoListId;
     let todoList = retriveListById(req.session.todoLists, todoListId);
