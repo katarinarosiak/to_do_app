@@ -51,19 +51,6 @@ app.use((req, res, next) => {
   next();
 });
 
-const compareListTitles = (firstList, secondList) => {
-  console.log(firstList)
-  if (firstList.isDone()) {
-    return 1;
-  } else {
-    if (firstList.title.toLowerCase() > secondList.title.toLowerCase()) {
-      return 1;
-    } else {
-      return -1;
-    }
-  }
-}
-
 
 
 const retriveListById = (todoLists, listId) => todoLists.find(list => list.id === Number(listId));
@@ -85,7 +72,7 @@ app.get('/', (req, res) => {
 
 app.get('/lists', (req, res) => {
   res.render('lists', {
-    todoLists: req.session.todoLists.sort(compareListTitles)
+    todoLists: sortTodoLists(req.session.todoLists)
   });
 });
 
