@@ -1,6 +1,6 @@
 
 # To Do List
-To Do Application is written in node.js. The exercise is a part of the Launch School Core Curriculum.  
+To Do Application is written in node.js.  
 
 It's using:
 - Express.js
